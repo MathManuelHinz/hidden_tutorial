@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Missing values &#8212; FIM</title>
+    <title>Point-wise missing pattern &#8212; FIM</title>
   
   
   
@@ -62,7 +62,7 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'imputation_missing_values';</script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Missing patterns" href="imputation_missing_patterns.html" />
+    <link rel="next" title="Imputing a temporal missing pattern" href="imputation_missing_patterns.html" />
     <link rel="prev" title="Imputation for Dynamical Systems: A crash course" href="zero_shot_dynamical_systems.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -196,8 +196,8 @@
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Imputation of Dynamical Systems</span></p>
 <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="zero_shot_dynamical_systems.html">Imputation for Dynamical Systems: A crash course</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">Missing values</a></li>
-<li class="toctree-l1"><a class="reference internal" href="imputation_missing_patterns.html">Missing patterns</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Point-wise missing pattern</a></li>
+<li class="toctree-l1"><a class="reference internal" href="imputation_missing_patterns.html">Imputing a temporal missing pattern</a></li>
 </ul>
 
     </div>
@@ -383,7 +383,7 @@ document.write(`
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>Missing values</h1>
+    <h1>Point-wise missing pattern</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
@@ -393,7 +393,7 @@ document.write(`
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#imputing-values-on-a-fine-grid">Imputing values on a fine grid</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#imputing-point-wise-missing-values-on-a-fine-grid">Imputing point-wise missing values on a fine grid</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#using-batches-and-estimating-standard-deviations">Using Batches and estimating standard deviations</a></li>
 </ul>
             </nav>
@@ -406,8 +406,8 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section class="tex2jax_ignore mathjax_ignore" id="missing-values">
-<h1>Missing values<a class="headerlink" href="#missing-values" title="Link to this heading">#</a></h1>
+  <section class="tex2jax_ignore mathjax_ignore" id="point-wise-missing-pattern">
+<h1>Point-wise missing pattern<a class="headerlink" href="#point-wise-missing-pattern" title="Link to this heading">#</a></h1>
 <p>We will now look at the imputation problem for missing values in more detail. In particular, we will see how to format the data for the <span class="math notranslate nohighlight">\(\texttt{FIM-}\ell\)</span> model, an example of higher dimensional data as well as some more advanced ways of interacting with our model. We once again start by loading the pretrained model and extracting <span class="math notranslate nohighlight">\(\texttt{FIM-}\ell\)</span>:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -419,14 +419,14 @@ document.write(`
 </div>
 </div>
 </div>
-<section id="imputing-values-on-a-fine-grid">
-<h2>Imputing values on a fine grid<a class="headerlink" href="#imputing-values-on-a-fine-grid" title="Link to this heading">#</a></h2>
+<section id="imputing-point-wise-missing-values-on-a-fine-grid">
+<h2>Imputing point-wise missing values on a fine grid<a class="headerlink" href="#imputing-point-wise-missing-values-on-a-fine-grid" title="Link to this heading">#</a></h2>
 <p>Now we once again generate our simple polynomial data:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">ts</span> <span class="o">=</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span> <span class="o">-</span> <span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 <span class="n">true_values</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">ts</span><span class="p">)</span> <span class="o">-</span> <span class="n">ts</span> 
-<span class="n">noisy_values</span> <span class="o">=</span> <span class="n">true_values</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">true_values</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+<span class="n">observed_values</span> <span class="o">=</span> <span class="n">true_values</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">true_values</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -514,7 +514,7 @@ To illustrate this, we will ask the model to evaluate the function at twice the 
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">N</span><span class="o">=</span><span class="mi">200</span>
 <span class="n">fine_grid_times</span><span class="o">=</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">N</span><span class="o">*</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mf">0.05</span><span class="p">)</span> <span class="o">-</span> <span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">N</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 <span class="n">fine_grid_true_values</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">fine_grid_times</span><span class="p">)</span> <span class="o">-</span> <span class="n">fine_grid_times</span> 
-<span class="n">batch</span><span class="o">=</span><span class="n">prepare_data_base</span><span class="p">(</span><span class="n">ts</span><span class="p">,</span><span class="n">noisy_values</span><span class="p">,</span><span class="n">fine_grid_times</span><span class="o">=</span><span class="n">fine_grid_times</span><span class="p">)</span>
+<span class="n">batch</span><span class="o">=</span><span class="n">prepare_data_base</span><span class="p">(</span><span class="n">ts</span><span class="p">,</span><span class="n">observed_values</span><span class="p">,</span><span class="n">fine_grid_times</span><span class="o">=</span><span class="n">fine_grid_times</span><span class="p">)</span>
 <span class="n">base_model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
 <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
     <span class="n">prediction</span> <span class="o">=</span> <span class="n">base_model</span><span class="p">(</span><span class="n">batch</span><span class="p">)[</span><span class="s2">&quot;visualizations&quot;</span><span class="p">][</span><span class="s2">&quot;solution&quot;</span><span class="p">][</span><span class="s2">&quot;learnt&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span> <span class="c1"># Shape [1, 100, 1] -&gt; shape [100]</span>
@@ -553,7 +553,7 @@ Now we will visualize both data again to see how good the model performed!</p>
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
 <span class="n">fig</span><span class="p">,</span> <span class="p">(</span><span class="n">ax1</span><span class="p">,</span> <span class="n">ax2</span><span class="p">)</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
 <span class="n">ax1</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ts</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span> <span class="n">true_values</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;True values&quot;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s2">&quot;blue&quot;</span><span class="p">,</span><span class="n">alpha</span><span class="o">=</span><span class="mf">0.9</span><span class="p">)</span>
-<span class="n">ax1</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">ts</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span> <span class="n">noisy_values</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Noisy values&quot;</span><span class="p">,</span>  <span class="n">c</span><span class="o">=</span><span class="s2">&quot;red&quot;</span><span class="p">,</span><span class="n">marker</span><span class="o">=</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">ts</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span> <span class="n">observed_values</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Observed values&quot;</span><span class="p">,</span>  <span class="n">c</span><span class="o">=</span><span class="s2">&quot;red&quot;</span><span class="p">,</span><span class="n">marker</span><span class="o">=</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
 <span class="n">ax1</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">fine_grid_times</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span> <span class="n">prediction</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Predicted values&quot;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s2">&quot;black&quot;</span><span class="p">)</span>
 <span class="n">ax1</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
 <span class="n">ax2</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">fine_grid_times</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span> <span class="p">(</span><span class="n">prediction</span><span class="o">-</span><span class="n">fine_grid_true_values</span><span class="o">.</span><span class="n">flatten</span><span class="p">())</span><span class="o">.</span><span class="n">abs</span><span class="p">(),</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Absolute Error&quot;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s2">&quot;red&quot;</span><span class="p">)</span>
@@ -564,7 +564,7 @@ Now we will visualize both data again to see how good the model performed!</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="_images/a9781b64510c3b4b682b04d1a02de4c0277a0cb832417faae595a97844e108da.png" src="_images/a9781b64510c3b4b682b04d1a02de4c0277a0cb832417faae595a97844e108da.png" />
+<img alt="_images/4d669755e6aaa24d9f3f7d05cf58596b51bd82276815f60989eb207e4f913384.png" src="_images/4d669755e6aaa24d9f3f7d05cf58596b51bd82276815f60989eb207e4f913384.png" />
 </div>
 </div>
 <p>Nice! we can see that even tho the data was quite noisy, we were able to learn a nice local representation to impute the missing values! Let”s quickly compute the root mean squared error before we move on to a more complicated example:</p>
@@ -575,7 +575,7 @@ Now we will visualize both data again to see how good the model performed!</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>tensor(0.4937)
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>tensor(0.7388)
 </pre></div>
 </div>
 </div>
@@ -591,7 +591,7 @@ Now we will visualize both data again to see how good the model performed!</p>
 <span class="n">N</span><span class="o">=</span><span class="mi">100</span>
 <span class="n">ts_batch</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([(</span><span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">N</span><span class="o">*</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span> <span class="o">-</span> <span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">)],</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 <span class="n">true_values_batch</span> <span class="o">=</span> <span class="n">PARAMS</span><span class="p">[</span><span class="s2">&quot;a&quot;</span><span class="p">]</span><span class="o">*</span><span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">PARAMS</span><span class="p">[</span><span class="s2">&quot;b&quot;</span><span class="p">]</span><span class="o">*</span><span class="n">ts_batch</span><span class="p">)</span> <span class="o">+</span> <span class="n">ts</span> <span class="o">-</span><span class="mf">0.5</span><span class="o">*</span><span class="n">ts_batch</span><span class="o">**</span><span class="mi">2</span> 
-<span class="n">noisy_values_batch</span> <span class="o">=</span> <span class="n">true_values_batch</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">true_values_batch</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+<span class="n">observed_values_batch</span> <span class="o">=</span> <span class="n">true_values_batch</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">true_values_batch</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -600,7 +600,7 @@ Now we will visualize both data again to see how good the model performed!</p>
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fine_grid_times_batch</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([(</span><span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">N</span><span class="o">*</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mf">0.05</span><span class="p">)</span> <span class="o">-</span> <span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">N</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">)],</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 <span class="n">fine_grid_true_values_batch</span> <span class="o">=</span> <span class="n">PARAMS</span><span class="p">[</span><span class="s2">&quot;a&quot;</span><span class="p">]</span><span class="o">*</span><span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">PARAMS</span><span class="p">[</span><span class="s2">&quot;b&quot;</span><span class="p">]</span><span class="o">*</span><span class="n">fine_grid_times_batch</span><span class="p">)</span> <span class="o">+</span> <span class="n">fine_grid_times_batch</span> <span class="o">-</span><span class="n">fine_grid_times_batch</span><span class="o">**</span><span class="mi">2</span>  <span class="c1"># To compare against while evaluating</span>
-<span class="n">batch</span><span class="o">=</span><span class="n">prepare_data_base</span><span class="p">(</span><span class="n">ts_batch</span><span class="p">,</span><span class="n">noisy_values_batch</span><span class="p">,</span><span class="n">fine_grid_times</span><span class="o">=</span><span class="n">fine_grid_times_batch</span><span class="p">)</span>
+<span class="n">batch</span><span class="o">=</span><span class="n">prepare_data_base</span><span class="p">(</span><span class="n">ts_batch</span><span class="p">,</span><span class="n">observed_values_batch</span><span class="p">,</span><span class="n">fine_grid_times</span><span class="o">=</span><span class="n">fine_grid_times_batch</span><span class="p">)</span>
 <span class="n">base_model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
 <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
     <span class="n">prediction_batch</span> <span class="o">=</span> <span class="n">base_model</span><span class="p">(</span><span class="n">batch</span><span class="p">)[</span><span class="s2">&quot;visualizations&quot;</span><span class="p">][</span><span class="s2">&quot;solution&quot;</span><span class="p">][</span><span class="s2">&quot;learnt&quot;</span><span class="p">]</span> <span class="c1"># Shape [10, N, 1]</span>
@@ -611,7 +611,7 @@ Now we will visualize both data again to see how good the model performed!</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ts_batch</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span> <span class="n">true_values_batch</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;True values&quot;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s2">&quot;blue&quot;</span><span class="p">,</span><span class="n">alpha</span><span class="o">=</span><span class="mf">0.9</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">ts_batch</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span> <span class="n">noisy_values_batch</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Noisy values of the first observation set&quot;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s2">&quot;red&quot;</span><span class="p">,</span><span class="n">alpha</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span><span class="n">marker</span><span class="o">=</span><span class="s2">&quot;x&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">ts_batch</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span> <span class="n">observed_values_batch</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Observed values of the first observation set&quot;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s2">&quot;red&quot;</span><span class="p">,</span><span class="n">alpha</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span><span class="n">marker</span><span class="o">=</span><span class="s2">&quot;x&quot;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">fine_grid_times_batch</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span> <span class="n">prediction_batch</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Mean predicted values&quot;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s2">&quot;black&quot;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">fill_between</span><span class="p">(</span><span class="n">fine_grid_times_batch</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span><span class="n">prediction_batch</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span><span class="o">-</span><span class="n">prediction_batch</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span><span class="n">prediction_batch</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span><span class="o">+</span><span class="n">prediction_batch</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span><span class="n">color</span><span class="o">=</span><span class="s2">&quot;red&quot;</span><span class="p">,</span><span class="n">alpha</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;1 std. error band&quot;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
@@ -620,7 +620,7 @@ Now we will visualize both data again to see how good the model performed!</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="_images/525f2f10342c7068ff62a81e7fb9901d4c094dcd8ebe8465d6f9ed45a22f65d1.png" src="_images/525f2f10342c7068ff62a81e7fb9901d4c094dcd8ebe8465d6f9ed45a22f65d1.png" />
+<img alt="_images/012ddc934812016e43fa4e715405f30f384730fa925b9e95117e56596075a9bd.png" src="_images/012ddc934812016e43fa4e715405f30f384730fa925b9e95117e56596075a9bd.png" />
 </div>
 </div>
 <p>From this example we can not only see how to compute confidence bands of the model, but we also saw how robust the model can be to noise!</p>
@@ -680,7 +680,7 @@ high frequency components, represented above by the sine function, can quickly b
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Missing patterns</p>
+        <p class="prev-next-title">Imputing a temporal missing pattern</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -700,7 +700,7 @@ high frequency components, represented above by the sine function, can quickly b
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#imputing-values-on-a-fine-grid">Imputing values on a fine grid</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#imputing-point-wise-missing-values-on-a-fine-grid">Imputing point-wise missing values on a fine grid</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#using-batches-and-estimating-standard-deviations">Using Batches and estimating standard deviations</a></li>
 </ul>
   </nav></div>

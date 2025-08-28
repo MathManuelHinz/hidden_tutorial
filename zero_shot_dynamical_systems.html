@@ -62,7 +62,7 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'zero_shot_dynamical_systems';</script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Missing values" href="imputation_missing_values.html" />
+    <link rel="next" title="Point-wise missing pattern" href="imputation_missing_values.html" />
     <link rel="prev" title="Solving a real problem using our model: The Discrete Flashing Ratchet (DFR)" href="dlr_casestudy.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -196,8 +196,8 @@
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Imputation of Dynamical Systems</span></p>
 <ul class="current nav bd-sidenav">
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Imputation for Dynamical Systems: A crash course</a></li>
-<li class="toctree-l1"><a class="reference internal" href="imputation_missing_values.html">Missing values</a></li>
-<li class="toctree-l1"><a class="reference internal" href="imputation_missing_patterns.html">Missing patterns</a></li>
+<li class="toctree-l1"><a class="reference internal" href="imputation_missing_values.html">Point-wise missing pattern</a></li>
+<li class="toctree-l1"><a class="reference internal" href="imputation_missing_patterns.html">Imputing a temporal missing pattern</a></li>
 </ul>
 
     </div>
@@ -471,7 +471,7 @@ involve more complex interpolating functions, meaning that no such <span class="
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">ts</span> <span class="o">=</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span> <span class="o">-</span> <span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 <span class="n">true_values</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">ts</span><span class="p">)</span> <span class="o">-</span> <span class="n">ts</span> 
-<span class="n">noisy_values</span> <span class="o">=</span> <span class="n">true_values</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">true_values</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+<span class="n">observed_values</span> <span class="o">=</span> <span class="n">true_values</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">true_values</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
 <span class="n">mask</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">ts</span><span class="p">)</span><span class="o">.</span><span class="n">bool</span><span class="p">()</span>
 </pre></div>
 </div>
@@ -488,34 +488,34 @@ involve more complex interpolating functions, meaning that no such <span class="
 <p>After which we use the <code class="docutils literal notranslate"><span class="pre">prepare_data_base</span></code> function to format the data for the base model <span class="math notranslate nohighlight">\(\texttt{FIM-}\ell\)</span>. We then call <span class="math notranslate nohighlight">\(\texttt{FIM-}\ell\)</span> on the created data to get the imputed values:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">base_batch</span> <span class="o">=</span> <span class="n">prepare_data_base</span><span class="p">(</span><span class="n">ts</span><span class="p">,</span> <span class="n">noisy_values</span><span class="p">,</span> <span class="n">mask</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">base_batch</span> <span class="o">=</span> <span class="n">prepare_data_base</span><span class="p">(</span><span class="n">ts</span><span class="p">,</span> <span class="n">observed_values</span><span class="p">,</span> <span class="n">mask</span><span class="p">)</span>
 <span class="n">base_model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
 <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
     <span class="n">prediction</span> <span class="o">=</span> <span class="n">base_model</span><span class="p">(</span><span class="n">base_batch</span><span class="p">)[</span><span class="s2">&quot;visualizations&quot;</span><span class="p">][</span><span class="s2">&quot;solution&quot;</span><span class="p">][</span><span class="s2">&quot;learnt&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span> <span class="c1"># Shape [1, 100, 1] -&gt; shape [100]</span>
-<span class="n">visualize_prediction</span><span class="p">(</span><span class="n">ts</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span><span class="n">true_values</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span><span class="n">noisy_values</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span><span class="n">prediction</span><span class="p">,</span><span class="n">mask</span><span class="o">.</span><span class="n">flatten</span><span class="p">())</span>
+<span class="n">visualize_prediction</span><span class="p">(</span><span class="n">ts</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span><span class="n">true_values</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span><span class="n">observed_values</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span><span class="n">prediction</span><span class="p">,</span><span class="n">mask</span><span class="o">.</span><span class="n">flatten</span><span class="p">())</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="_images/38ed2b16a6daf773d46db8edbb6fab872b57de52bc405dd6a0065851bc733d07.png" src="_images/38ed2b16a6daf773d46db8edbb6fab872b57de52bc405dd6a0065851bc733d07.png" />
+<img alt="_images/a9ff5b76547422824ba3156fc4d1ac58d76d029da21f7c2fecaa4f6d62af1eb3.png" src="_images/a9ff5b76547422824ba3156fc4d1ac58d76d029da21f7c2fecaa4f6d62af1eb3.png" />
 </div>
 </div>
 <p>Similarly, we can use the <span class="math notranslate nohighlight">\(\texttt{FIM}\)</span> model to impute values in the case of a temporal missing pattern i.e. when values are missing over a longer timeframe for which we now longer assume a simple structure of the underlying dynamic. We will use the sine function to generate example a simple example dataset and impute some missing data using the <span class="math notranslate nohighlight">\(\texttt{FIM}\)</span> model:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">true_values_temporal</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">ts</span><span class="p">)</span> <span class="o">-</span> <span class="n">ts</span> 
-<span class="n">noisy_values_temporal</span> <span class="o">=</span> <span class="n">true_values_temporal</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">true_values</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+<span class="n">observed_values_temporal</span> <span class="o">=</span> <span class="n">true_values_temporal</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">true_values</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
 <span class="n">mask_temporal</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">ts</span><span class="p">)</span><span class="o">.</span><span class="n">bool</span><span class="p">()</span>
 <span class="n">mask_temporal</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">70</span><span class="p">,</span><span class="mi">80</span><span class="p">)],</span><span class="mi">0</span><span class="p">]</span><span class="o">=</span><span class="kc">True</span>
-<span class="n">batch</span><span class="o">=</span><span class="n">prepare_data</span><span class="p">(</span><span class="n">ts</span><span class="p">,</span><span class="n">true_values_temporal</span><span class="p">,</span><span class="n">mask_temporal</span><span class="p">,</span><span class="n">imp_start</span><span class="o">=</span><span class="mi">70</span><span class="p">,</span><span class="n">imp_end</span><span class="o">=</span><span class="mi">80</span><span class="p">)</span>
+<span class="n">batch</span><span class="o">=</span><span class="n">prepare_data</span><span class="p">(</span><span class="n">ts</span><span class="p">,</span><span class="n">observed_values_temporal</span><span class="p">,</span><span class="n">mask_temporal</span><span class="p">,</span><span class="n">imp_start</span><span class="o">=</span><span class="mi">70</span><span class="p">,</span><span class="n">imp_end</span><span class="o">=</span><span class="mi">80</span><span class="p">)</span>
 <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
     <span class="n">prediction_temporal</span><span class="o">=</span><span class="n">model</span><span class="p">(</span><span class="n">batch</span><span class="p">)[</span><span class="s2">&quot;imputation_window&quot;</span><span class="p">][</span><span class="s2">&quot;learnt&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
-<span class="n">visualize_prediction</span><span class="p">(</span><span class="n">ts</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span><span class="n">true_values_temporal</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span><span class="n">noisy_values_temporal</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span><span class="n">prediction_temporal</span><span class="p">,</span><span class="n">mask_temporal</span><span class="o">.</span><span class="n">flatten</span><span class="p">())</span>
+<span class="n">visualize_prediction</span><span class="p">(</span><span class="n">ts</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span><span class="n">true_values_temporal</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span><span class="n">observed_values_temporal</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span><span class="n">prediction_temporal</span><span class="p">,</span><span class="n">mask_temporal</span><span class="o">.</span><span class="n">flatten</span><span class="p">())</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="_images/f002e685805dea35efea039bb9309eda0dffb1ffd9025c50ee4c294f71eb5e67.png" src="_images/f002e685805dea35efea039bb9309eda0dffb1ffd9025c50ee4c294f71eb5e67.png" />
+<img alt="_images/ab4461d8b19b258108e6e7a78b354abdf90aeddd1b465c0ff70699e7766d7de0.png" src="_images/ab4461d8b19b258108e6e7a78b354abdf90aeddd1b465c0ff70699e7766d7de0.png" />
 </div>
 </div>
 </section>
@@ -565,7 +565,7 @@ involve more complex interpolating functions, meaning that no such <span class="
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Missing values</p>
+        <p class="prev-next-title">Point-wise missing pattern</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>

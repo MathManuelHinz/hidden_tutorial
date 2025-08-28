@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Missing patterns &#8212; FIM</title>
+    <title>Imputing a temporal missing pattern &#8212; FIM</title>
   
   
   
@@ -62,7 +62,7 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'imputation_missing_patterns';</script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="prev" title="Missing values" href="imputation_missing_values.html" />
+    <link rel="prev" title="Point-wise missing pattern" href="imputation_missing_values.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -195,8 +195,8 @@
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Imputation of Dynamical Systems</span></p>
 <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="zero_shot_dynamical_systems.html">Imputation for Dynamical Systems: A crash course</a></li>
-<li class="toctree-l1"><a class="reference internal" href="imputation_missing_values.html">Missing values</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">Missing patterns</a></li>
+<li class="toctree-l1"><a class="reference internal" href="imputation_missing_values.html">Point-wise missing pattern</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Imputing a temporal missing pattern</a></li>
 </ul>
 
     </div>
@@ -369,9 +369,7 @@ document.write(`
   </button>
 `);
 </script>
-<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
-    <span class="fa-solid fa-list"></span>
-</button>
+
 </div></div>
       
     </div>
@@ -382,19 +380,11 @@ document.write(`
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>Missing patterns</h1>
+    <h1>Imputing a temporal missing pattern</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
             
-            <div>
-                <h2> Contents </h2>
-            </div>
-            <nav aria-label="Page">
-                <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#imputing-a-pattern">Imputing a pattern</a></li>
-</ul>
-            </nav>
         </div>
     </div>
 </div>
@@ -404,9 +394,8 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section class="tex2jax_ignore mathjax_ignore" id="missing-patterns">
-<h1>Missing patterns<a class="headerlink" href="#missing-patterns" title="Link to this heading">#</a></h1>
-<p>Similar to the last section, we will now look at the <span class="math notranslate nohighlight">\(\texttt{FIM}\)</span> model. We will again generate some data, write some preprocessing function and delve deeper into the arguments of this model! Remember that the <span class="math notranslate nohighlight">\(\texttt{FIM}\)</span> tries to impute a whole range of values over some timeframe for which local simplicity can no longer be assumed.</p>
+  <p>#Temporal missing pattern
+Similar to the last section, we will now look at the <span class="math notranslate nohighlight">\(\texttt{FIM}\)</span> model. We will again generate some data, write some preprocessing function and delve deeper into the arguments of this model! Remember that the <span class="math notranslate nohighlight">\(\texttt{FIM}\)</span> tries to impute a whole range of values over some timeframe for which local simplicity can no longer be assumed.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">fim.models.imputation</span><span class="w"> </span><span class="kn">import</span> <span class="n">FIMImputationWindowed</span>
@@ -416,8 +405,8 @@ document.write(`
 </div>
 </div>
 </div>
-<section id="imputing-a-pattern">
-<h2>Imputing a pattern<a class="headerlink" href="#imputing-a-pattern" title="Link to this heading">#</a></h2>
+<section id="imputing-a-temporal-missing-pattern">
+<h1>Imputing a temporal missing pattern<a class="headerlink" href="#imputing-a-temporal-missing-pattern" title="Link to this heading">#</a></h1>
 <p>We again start by generating some data, similar to the last two sections:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -634,10 +623,9 @@ document.write(`
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="_images/bf1922b351767e480463289bbb52700a2d0b5b5af14eb5e41520f9072d65a360.png" src="_images/bf1922b351767e480463289bbb52700a2d0b5b5af14eb5e41520f9072d65a360.png" />
+<img alt="_images/77562b1cf948873b8c6f5185987c88c3fdab1be4ecfecffc77b5472200d4883d.png" src="_images/77562b1cf948873b8c6f5185987c88c3fdab1be4ecfecffc77b5472200d4883d.png" />
 </div>
 </div>
-</section>
 </section>
 
     <script type="text/x-thebe-config">
@@ -676,7 +664,7 @@ document.write(`
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Missing values</p>
+        <p class="prev-next-title">Point-wise missing pattern</p>
       </div>
     </a>
 </div>
@@ -685,21 +673,6 @@ document.write(`
             </div>
             
             
-              
-                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
-
-
-  <div class="sidebar-secondary-item">
-  <div class="page-toc tocsection onthispage">
-    <i class="fa-solid fa-list"></i> Contents
-  </div>
-  <nav class="bd-toc-nav page-toc">
-    <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#imputing-a-pattern">Imputing a pattern</a></li>
-</ul>
-  </nav></div>
-
-</div></div>
               
             
           </div>
