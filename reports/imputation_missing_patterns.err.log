@@ -1,0 +1,158 @@
+Traceback (most recent call last):
+  File "/home/manuel/Documents/github/FIM/.venv/lib/python3.12/site-packages/jupyter_core/utils/__init__.py", line 154, in wrapped
+    asyncio.get_running_loop()
+RuntimeError: no running event loop
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/manuel/Documents/github/FIM/.venv/lib/python3.12/site-packages/jupyter_cache/executors/utils.py", line 58, in single_nb_execution
+    executenb(
+  File "/home/manuel/Documents/github/FIM/.venv/lib/python3.12/site-packages/nbclient/client.py", line 1319, in execute
+    return NotebookClient(nb=nb, resources=resources, km=km, **kwargs).execute()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/manuel/Documents/github/FIM/.venv/lib/python3.12/site-packages/jupyter_core/utils/__init__.py", line 158, in wrapped
+    return loop.run_until_complete(inner)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/base_events.py", line 687, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/home/manuel/Documents/github/FIM/.venv/lib/python3.12/site-packages/nbclient/client.py", line 709, in async_execute
+    await self.async_execute_cell(
+  File "/home/manuel/Documents/github/FIM/.venv/lib/python3.12/site-packages/nbclient/client.py", line 1062, in async_execute_cell
+    await self._check_raise_for_error(cell, cell_index, exec_reply)
+  File "/home/manuel/Documents/github/FIM/.venv/lib/python3.12/site-packages/nbclient/client.py", line 918, in _check_raise_for_error
+    raise CellExecutionError.from_cell_and_msg(cell, exec_reply_content)
+nbclient.exceptions.CellExecutionError: An error occurred while executing the following cell:
+------------------
+def prepare_data_3_window(ts, values, mask=None, imp_start=65, imp_end=70):
+    """
+    Prepare simple time series data for FIM imputation model.
+    
+    Args:
+        ts: Time points tensor of shape [1, 1, T, 1]
+        values: Value tensor of shape [1, 1, T, 1] 
+        mask: Boolean mask tensor of shape [1, 1, T, 1] (True = observed, False = missing)
+        window_count: Number of windows (3 or 5)
+        imputation_start: Start index for imputation window
+        imputation_end: End index for imputation window
+    
+    Returns:
+        batch: Dictionary suitable for FIM model
+    """
+    if mask is None:
+        mask = torch.zeros_like(ts).bool()
+    
+    B, _, T, D = ts.shape  # Should be [1, 1, T, 1]
+    
+    
+    # Create location times and values (imputation window)
+    loc_times = ts[0, 0, imp_start:imp_end].unsqueeze(0)  # [1, imp_len, 1]
+    loc_values = values[0, 0, imp_start:imp_end].unsqueeze(0)  # [1, imp_len, 1]
+    
+    # Create context windows
+
+    # Left context, imputation window (index 1), right context
+    left_context_values = values[:, :, :imp_start]  # [1, 1, left_len, 1]
+    right_context_values = values[:, :, imp_end:]   # [1, 1, right_len, 1]
+    
+    left_context_times = ts[:, :, :imp_start]
+    right_context_times = ts[:, :, imp_end:]
+    
+    left_context_mask = mask[:, :, :imp_start]
+    right_context_mask = mask[:, :, imp_end:]
+    
+    # Pad to same length (max_length_window)
+    max_len = max(left_context_values.shape[2], right_context_values.shape[2])
+    max_len = max(max_len, 64)  # Minimum window size
+    
+    # Pad left context
+    left_pad_size = max_len - left_context_values.shape[2]
+    if left_pad_size > 0:
+        left_context_values = torch.cat([
+            torch.zeros(B, 1, left_pad_size, D), 
+            left_context_values
+        ], dim=2)
+        left_context_times = torch.cat([
+            torch.zeros(B, 1, left_pad_size, 1), 
+            left_context_times
+        ], dim=2)
+        left_context_mask = torch.cat([2
+            torch.zeros(B, 1, left_pad_size, 1, dtype=torch.bool), 
+            left_context_mask
+        ], dim=2)
+    else:
+        # Truncate if too long
+        left_context_values = left_context_values[:, :, -max_len:]
+        left_context_times = left_context_times[:, :, -max_len:]
+        left_context_mask = left_context_mask[:, :, -max_len:]
+    
+    # Pad right context
+    right_pad_size = max_len - right_context_values.shape[2]
+    if right_pad_size > 0:
+        right_context_values = torch.cat([
+            right_context_values,
+            torch.zeros(B, 1, right_pad_size, D)
+        ], dim=2)
+        right_context_times = torch.cat([
+            right_context_times,
+            torch.zeros(B, 1, right_pad_size, 1)
+        ], dim=2)
+        right_context_mask = torch.cat([
+            right_context_mask,
+            torch.zeros(B, 1, right_pad_size, 1, dtype=torch.bool)
+        ], dim=2)
+    else:
+        # Truncate if too long
+        right_context_values = right_context_values[:, :, :max_len]
+        right_context_times = right_context_times[:, :, :max_len]
+        right_context_mask = right_context_mask[:, :, :max_len]
+    
+    # Stack context windows: [B, window_count-1, max_len, D]
+    context_values = torch.stack([left_context_values.squeeze(1), right_context_values.squeeze(1)], dim=1)
+    context_times = torch.stack([left_context_times.squeeze(1), right_context_times.squeeze(1)], dim=1)
+    context_mask = torch.stack([left_context_mask.squeeze(1), right_context_mask.squeeze(1)], dim=1)
+        
+    
+    
+    # Find initial conditions (last observed point in left context, first in right context)
+    # Find last True in left context
+    left_mask = context_mask[:, 0].squeeze(-1)  # [B, max_len]
+    reversed_left = torch.flip(left_mask, dims=[1])
+    last_idx_left = torch.argmax(reversed_left.int(), dim=1)
+    last_idx_left = left_mask.shape[1] - 1 - last_idx_left
+    
+    # Find first True in right context
+    right_mask = context_mask[:, 1].squeeze(-1)  # [B, max_len]
+    first_idx_right = torch.argmax(right_mask.int(), dim=1)
+    
+    batch_indices = torch.arange(B)
+    linitial_conditions = context_values[:, 0][batch_indices, last_idx_left]  # [B, D]
+    rinitial_conditions = context_values[:, 1][batch_indices, first_idx_right]  # [B, D]
+    
+    # Create padding mask for locations (all False for no padding in this simple case)
+    padding_mask_locations = torch.zeros(B, loc_times.shape[1], dtype=torch.bool)
+    
+    # Prepare batch dictionary
+    batch = {
+        "location_times": loc_times.float(),
+        "target_sample_path": loc_values.float(),
+        "initial_conditions": loc_values[:, 0].float(),  # First point of imputation window
+        "observation_values": context_values.float(),
+        "linitial_conditions": linitial_conditions.float(),
+        "rinitial_conditions": rinitial_conditions.float(),
+        "observation_mask": context_mask, 
+        "observation_times": context_times.float(),
+        "padding_mask_locations": padding_mask_locations,
+    }
+    
+    return batch
+------------------
+
+
+  [36mCell[39m[36m [39m[32mIn[3][39m[32m, line 53[39m
+[31m    [39m[31mleft_context_mask = torch.cat([2[39m
+                                   ^
+[31mSyntaxError[39m[31m:[39m invalid syntax. Perhaps you forgot a comma?
+
+

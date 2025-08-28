@@ -1,0 +1,99 @@
+Traceback (most recent call last):
+  File "/home/manuel/Documents/github/FIM/.venv/lib/python3.12/site-packages/jupyter_core/utils/__init__.py", line 154, in wrapped
+    asyncio.get_running_loop()
+RuntimeError: no running event loop
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/manuel/Documents/github/FIM/.venv/lib/python3.12/site-packages/jupyter_cache/executors/utils.py", line 58, in single_nb_execution
+    executenb(
+  File "/home/manuel/Documents/github/FIM/.venv/lib/python3.12/site-packages/nbclient/client.py", line 1319, in execute
+    return NotebookClient(nb=nb, resources=resources, km=km, **kwargs).execute()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/manuel/Documents/github/FIM/.venv/lib/python3.12/site-packages/jupyter_core/utils/__init__.py", line 158, in wrapped
+    return loop.run_until_complete(inner)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/base_events.py", line 687, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/home/manuel/Documents/github/FIM/.venv/lib/python3.12/site-packages/nbclient/client.py", line 709, in async_execute
+    await self.async_execute_cell(
+  File "/home/manuel/Documents/github/FIM/.venv/lib/python3.12/site-packages/nbclient/client.py", line 1062, in async_execute_cell
+    await self._check_raise_for_error(cell, cell_index, exec_reply)
+  File "/home/manuel/Documents/github/FIM/.venv/lib/python3.12/site-packages/nbclient/client.py", line 918, in _check_raise_for_error
+    raise CellExecutionError.from_cell_and_msg(cell, exec_reply_content)
+nbclient.exceptions.CellExecutionError: An error occurred while executing the following cell:
+------------------
+from transformers import AutoModel
+from fim.trainers.utils import get_accel_type
+device = torch.device("cpu")#get_accel_type() due to current issues with cuda and the RTX 5090 / 570 driver
+fimmjp = AutoModel.from_pretrained("FIM4Science/fim-mjp", trust_remote_code=True)
+
+fimmjp = fimmjp.to(device)
+fimmjp.eval()
+------------------
+
+
+[31m---------------------------------------------------------------------------[39m
+[31mTypeError[39m                                 Traceback (most recent call last)
+[36mCell[39m[36m [39m[32mIn[6][39m[32m, line 4[39m
+[32m      2[39m [38;5;28;01mfrom[39;00m[38;5;250m [39m[34;01mfim[39;00m[34;01m.[39;00m[34;01mtrainers[39;00m[34;01m.[39;00m[34;01mutils[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m get_accel_type
+[32m      3[39m device = torch.device([33m"[39m[33mcpu[39m[33m"[39m)[38;5;66;03m#get_accel_type() due to current issues with cuda and the RTX 5090 / 570 driver[39;00m
+[32m----> [39m[32m4[39m fimmjp = [43mAutoModel[49m[43m.[49m[43mfrom_pretrained[49m[43m([49m[33;43m"[39;49m[33;43mFIM4Science/fim-mjp[39;49m[33;43m"[39;49m[43m,[49m[43m [49m[43mtrust_remote_code[49m[43m=[49m[38;5;28;43;01mTrue[39;49;00m[43m)[49m
+[32m      6[39m fimmjp = fimmjp.to(device)
+[32m      7[39m fimmjp.eval()
+
+[36mFile [39m[32m~/Documents/github/FIM/.venv/lib/python3.12/site-packages/transformers/models/auto/auto_factory.py:559[39m, in [36m_BaseAutoModelClass.from_pretrained[39m[34m(cls, pretrained_model_name_or_path, *model_args, **kwargs)[39m
+[32m    557[39m     [38;5;28mcls[39m.register(config.[34m__class__[39m, model_class, exist_ok=[38;5;28;01mTrue[39;00m)
+[32m    558[39m     model_class = add_generation_mixin_to_remote_model(model_class)
+[32m--> [39m[32m559[39m     [38;5;28;01mreturn[39;00m [43mmodel_class[49m[43m.[49m[43mfrom_pretrained[49m[43m([49m
+[32m    560[39m [43m        [49m[43mpretrained_model_name_or_path[49m[43m,[49m[43m [49m[43m*[49m[43mmodel_args[49m[43m,[49m[43m [49m[43mconfig[49m[43m=[49m[43mconfig[49m[43m,[49m[43m [49m[43m*[49m[43m*[49m[43mhub_kwargs[49m[43m,[49m[43m [49m[43m*[49m[43m*[49m[43mkwargs[49m
+[32m    561[39m [43m    [49m[43m)[49m
+[32m    562[39m [38;5;28;01melif[39;00m [38;5;28mtype[39m(config) [38;5;129;01min[39;00m [38;5;28mcls[39m._model_mapping.keys():
+[32m    563[39m     model_class = _get_model_class(config, [38;5;28mcls[39m._model_mapping)
+
+[36mFile [39m[32m~/Documents/github/FIM/.venv/lib/python3.12/site-packages/transformers/modeling_utils.py:4096[39m, in [36mPreTrainedModel.from_pretrained[39m[34m(cls, pretrained_model_name_or_path, config, cache_dir, ignore_mismatched_sizes, force_download, local_files_only, token, revision, use_safetensors, weights_only, *model_args, **kwargs)[39m
+[32m   4090[39m     config = [38;5;28mcls[39m._autoset_attn_implementation(
+[32m   4091[39m         config, use_flash_attention_2=use_flash_attention_2, torch_dtype=torch_dtype, device_map=device_map
+[32m   4092[39m     )
+[32m   4094[39m [38;5;28;01mwith[39;00m ContextManagers(init_contexts):
+[32m   4095[39m     [38;5;66;03m# Let's make sure we don't run the init function of buffer modules[39;00m
+[32m-> [39m[32m4096[39m     model = [38;5;28;43mcls[39;49m[43m([49m[43mconfig[49m[43m,[49m[43m [49m[43m*[49m[43mmodel_args[49m[43m,[49m[43m [49m[43m*[49m[43m*[49m[43mmodel_kwargs[49m[43m)[49m
+[32m   4098[39m [38;5;66;03m# make sure we use the model's config since the __init__ call might have copied it[39;00m
+[32m   4099[39m config = model.config
+
+[36mFile [39m[32m~/.cache/huggingface/modules/transformers_modules/FIM4Science/fim-mjp/89090c4630461cfa7376e96836642d053f0a5407/mjp.py:128[39m, in [36mFIMMJP.__init__[39m[34m(self, config, **kwargs)[39m
+[32m    125[39m [38;5;28mself[39m.gaussian_nll = nn.GaussianNLLLoss(full=[38;5;28;01mTrue[39;00m, reduction=[33m"[39m[33mnone[39m[33m"[39m)
+[32m    126[39m [38;5;28mself[39m.init_cross_entropy = nn.CrossEntropyLoss(reduction=[33m"[39m[33mnone[39m[33m"[39m)
+[32m--> [39m[32m128[39m [38;5;28;43mself[39;49m[43m.[49m[43m__create_modules[49m[43m([49m[43m)[49m
+
+[36mFile [39m[32m~/.cache/huggingface/modules/transformers_modules/FIM4Science/fim-mjp/89090c4630461cfa7376e96836642d053f0a5407/mjp.py:142[39m, in [36mFIMMJP.__create_modules[39m[34m(self)[39m
+[32m    139[39m [38;5;28mself[39m.pos_encodings = create_class_instance(pos_encodings.pop([33m"[39m[33mname[39m[33m"[39m), pos_encodings)
+[32m    141[39m ts_encoder[[33m"[39m[33min_features[39m[33m"[39m] = [38;5;28mself[39m.config.n_states + [38;5;28mself[39m.pos_encodings.out_features
+[32m--> [39m[32m142[39m [38;5;28mself[39m.ts_encoder = [43mcreate_class_instance[49m[43m([49m[43mts_encoder[49m[43m.[49m[43mpop[49m[43m([49m[33;43m"[39;49m[33;43mname[39;49m[33;43m"[39;49m[43m)[49m[43m,[49m[43m [49m[43mts_encoder[49m[43m)[49m
+[32m    144[39m [38;5;28mself[39m.path_attention = create_class_instance(path_attention.pop([33m"[39m[33mname[39m[33m"[39m), path_attention)
+[32m    146[39m in_features = intensity_matrix_decoder.get(
+[32m    147[39m     [33m"[39m[33min_features[39m[33m"[39m,
+[32m    148[39m     [38;5;28mself[39m.ts_encoder.out_features + (([38;5;28mself[39m.total_offdiagonal_transitions + [32m1[39m) [38;5;28;01mif[39;00m [38;5;28mself[39m.config.use_adjacency_matrix [38;5;28;01melse[39;00m [32m1[39m),
+[32m    149[39m )
+
+[36mFile [39m[32m~/Documents/github/FIM/src/fim/utils/helper.py:91[39m, in [36mcreate_class_instance[39m[34m(class_full_path, kwargs, *args)[39m
+[32m     89[39m [38;5;28;01mfor[39;00m key, value [38;5;129;01min[39;00m kwargs.items():
+[32m     90[39m     [38;5;28;01mif[39;00m [38;5;28misinstance[39m(value, [38;5;28mdict[39m):
+[32m---> [39m[32m91[39m         kwargs[key] = [43mcreate_class_instance[49m[43m([49m[43mvalue[49m[43m.[49m[43mpop[49m[43m([49m[33;43m"[39;49m[33;43mname[39;49m[33;43m"[39;49m[43m)[49m[43m,[49m[43m [49m[43mvalue[49m[43m)[49m
+[32m     92[39m module_name, class_name = class_full_path.rsplit([33m"[39m[33m.[39m[33m"[39m, [32m1[39m)
+[32m     93[39m module = import_module(module_name)
+
+[36mFile [39m[32m~/Documents/github/FIM/src/fim/utils/helper.py:98[39m, in [36mcreate_class_instance[39m[34m(class_full_path, kwargs, *args)[39m
+[32m     96[39m     instance = clazz(*args)
+[32m     97[39m [38;5;28;01melse[39;00m:
+[32m---> [39m[32m98[39m     instance = [43mclazz[49m[43m([49m[43m*[49m[43margs[49m[43m,[49m[43m [49m[43m*[49m[43m*[49m[43mkwargs[49m[43m)[49m
+[32m    100[39m [38;5;28;01mreturn[39;00m instance
+
+[36mFile [39m[32m~/Documents/github/FIM/.venv/lib/python3.12/site-packages/torch/nn/modules/rnn.py:977[39m, in [36mLSTM.__init__[39m[34m(self, *args, **kwargs)[39m
+[32m    976[39m [38;5;28;01mdef[39;00m[38;5;250m [39m[34m__init__[39m([38;5;28mself[39m, *args, **kwargs):
+[32m--> [39m[32m977[39m     [38;5;28;43msuper[39;49m[43m([49m[43m)[49m[43m.[49m[34;43m__init__[39;49m[43m([49m[33;43m"[39;49m[33;43mLSTM[39;49m[33;43m"[39;49m[43m,[49m[43m [49m[43m*[49m[43margs[49m[43m,[49m[43m [49m[43m*[49m[43m*[49m[43mkwargs[49m[43m)[49m
+
+[31mTypeError[39m: RNNBase.__init__() missing 1 required positional argument: 'input_size'
+
